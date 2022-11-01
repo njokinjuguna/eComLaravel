@@ -8,6 +8,7 @@ use App\Models\Cart;
 use App\Models\Order;
 use Illuminate\Support\Facades\DB;
 use Session;
+use Stripe;
 
 class ProductController extends Controller
 {
@@ -85,25 +86,55 @@ class ProductController extends Controller
          return view('ordernow',['total'=>$total]);
     }
 
+    // function orderPlace(Request $req)
+    // {
+    //     $userId=Session::get('user')['id'];
+    //     $allCart= Cart::where('user_id',$userId)->get();
+
+    //     foreach($allCart as $cart)
+    //     {
+    //         $order= new Order;
+    //         $order->product_id=$cart['product_id'];
+    //         $order->user_id=$cart['user_id'];
+    //         $order->status="pending";
+    //         $order->payment_method=$req->payment;
+    //         $order->payment_status="pending";
+    //         $order->address=$req->address;
+    //         $order->save();
+    //         Cart::where('user_id',$userId)->delete();
+    //     }
+    //     $req->input();
+    //     return redirect('/');
+       
+    // }
+
+
     function orderPlace(Request $req)
     {
         $userId=Session::get('user')['id'];
         $allCart= Cart::where('user_id',$userId)->get();
 
+        Stripe\Stripe::setApiKey(env('STRIPE_SECRET'));
+
+
         foreach($allCart as $cart)
         {
+            
             $order= new Order;
             $order->product_id=$cart['product_id'];
             $order->user_id=$cart['user_id'];
             $order->status="pending";
-            $order->payment_method=$req->payment;
-            $order->payment_status="pending";
+            $order->payment_method=$req->CardNumber;
+            $order->payment_status="This payment is tested purpose";
             $order->address=$req->address;
             $order->save();
             Cart::where('user_id',$userId)->delete();
         }
+       
         $req->input();
+
         return redirect('/');
+        Session::flash('success','Payment successful');
        
     }
 
